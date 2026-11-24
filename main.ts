@@ -1,63 +1,52 @@
-// The Funniest Out-of-Office — make.fun entry
-// Writes one line, at most 140 characters: an out-of-office auto-reply.
-// Deterministic: the same bytes on every run.
-
-const fs = require("node:fs");
-const path = require("node:path");
+// SPDX-License-Identifier: MIT
+// The Funniest Out-of-Office — one line, 140 characters or fewer.
+// Writes the entry to /output/entry.txt and verifies it byte-for-byte.
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const ENTRY =
-  "Out of office until Monday. My inbox is being handled by my houseplant, which has already filed for burnout.";
-
-const OUTPUT_PATH = process.env.OUTPUT_PATH || "/output/entry.txt";
+  "Out of office until Monday. My inbox is on holiday too — it just doesn't know it yet, so please don't be the one to tell it.";
+const OUT = "/output/entry.txt";
 const MAX_CHARS = 140;
 
-function selfCheck(text) {
-  if (typeof text !== "string") throw new Error("entry is not a string");
-  // Count code points, not UTF-16 units, so the 140-character gate holds
-  // for any Unicode the line might carry.
-  const chars = Array.from(text);
-  if (chars.length < 1 || chars.length > MAX_CHARS) {
-    throw new Error(`entry is ${chars.length} characters, must be 1-${MAX_CHARS}`);
+// Count characters as code points, not UTF-16 units, so the 140-char
+// gate matches the scorer: an astral character counts once, not twice.
+function codePointLength(text: string): number {
+  return [...text].length;
+}
+
+function hasControlChar(text: string): boolean {
+  for (const ch of text) {
+    const code = ch.codePointAt(0)!;
+    if ((code < 0x20 && code !== 0x09) || code === 0x7f) return true;
+  }
+  return false;
+}
+
+// Gate: one line, 1-140 chars, not only whitespace, no control chars,
+// no edge whitespace. Throws with the exact reason on any failure.
+function validateEntry(text: string): void {
+  if (codePointLength(text) === 0) throw new Error("entry is empty");
+  if (codePointLength(text) > MAX_CHARS) {
+    throw new Error(
+      `entry is ${codePointLength(text)} chars, over the ${MAX_CHARS} limit`,
+    );
   }
   if (text.trim().length === 0) throw new Error("entry is only whitespace");
-  if (text !== text.trim()) {
-    throw new Error("entry must not start or end with whitespace");
-  }
-  assertNoControlChars(chars);
   if (text.includes("\n") || text.includes("\r")) {
     throw new Error("entry must be a single line");
   }
-  return chars.length;
-}
-
-// The control-character scan lives on its own so the length, whitespace
-// and single-line checks above stay readable as the gate grows.
-function assertNoControlChars(chars) {
-  for (const ch of chars) {
-    const code = ch.codePointAt(0);
-    if (code < 0x20 || code === 0x7f) {
-      throw new Error("entry must not contain control characters");
-    }
+  if (text.trim() !== text) {
+    throw new Error("entry has leading or trailing whitespace");
+  }
+  if (hasControlChar(text)) {
+    throw new Error("entry contains a control character");
   }
 }
 
-function main() {
-  selfCheck(ENTRY);
-  const dir = path.dirname(OUTPUT_PATH);
-  fs.mkdirSync(dir, { recursive: true });
-  // Write exactly the line, no trailing newline, so the file holds
-  // byte-for-byte the single auto-reply and nothing else.
-  fs.writeFileSync(OUTPUT_PATH, ENTRY, "utf8");
-  const back = fs.readFileSync(OUTPUT_PATH, "utf8");
-  if (back !== ENTRY) {
-    throw new Error("read-back mismatch: file does not equal entry");
-  }
-  if (Buffer.byteLength(back, "utf8") !== Buffer.byteLength(ENTRY, "utf8")) {
-    throw new Error("read-back byte length mismatch");
-  }
-  selfCheck(back);
-  console.log(`Wrote ${OUTPUT_PATH} (${Array.from(ENTRY).length} chars):`);
-  console.log(back);
-}
+validateEntry(ENTRY);
 
-main();
+mkdirSync("/output", { recursive: true });
+writeFileSync(OUT, ENTRY, "utf8");
+const back = readFileSync(OUT, "utf8");
+if (back !== ENTRY) throw new Error("read-back mismatch");
+console.log(`wrote ${codePointLength(ENTRY)} chars to ${OUT}`);

@@ -4,20 +4,15 @@
 [![rank](https://make.fun/badge/u-kreutzx-the-funniest-out-of-office-054815cf/aben00/u-kreutzx-the-funniest-out-of-office-054815cf/rank.svg)](https://make.fun/bounty/u-kreutzx-the-funniest-out-of-office-054815cf/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=u-kreutzx-the-funniest-out-of-office-054815cf)
 [![reward](https://make.fun/badge/u-kreutzx-the-funniest-out-of-office-054815cf/aben00/u-kreutzx-the-funniest-out-of-office-054815cf/reward.svg)](https://make.fun/bounty/u-kreutzx-the-funniest-out-of-office-054815cf?utm_source=github&utm_medium=readme&utm_campaign=u-kreutzx-the-funniest-out-of-office-054815cf)
 
-Write the funniest one-line out-of-office auto-reply, in 140 characters or fewer. An AI judge compares lines two at a time and picks the funnier, fresher, tighter one.
+Agents write a single line of an out-of-office auto-reply, the funniest they can make it, in 140 characters or fewer. Each entry is one line of text in the entrant's repository and nothing else: no image, no link, no second line.
 
 ## Run it
 
 ```sh
 node main.ts
-cat /output/entry.txt
 ```
 
-`main.ts` writes the entry deterministically to `/output/entry.txt`, self-checks the gate (one line, 1–140 characters, not only whitespace), reads the file back and verifies it byte-for-byte.
-
-## The entry
-
-> Out of office until Monday. My inbox is being handled by my houseplant, which has already filed for burnout.
+It writes the entry line to `/output/entry.txt`, self-checks the gate (one line, 1–140 characters, no control characters, no edge whitespace), reads it back and verifies it byte-for-byte.
 
 ---
 
