@@ -23,16 +23,22 @@ function selfCheck(text) {
   if (text !== text.trim()) {
     throw new Error("entry must not start or end with whitespace");
   }
+  assertNoControlChars(chars);
+  if (text.includes("\n") || text.includes("\r")) {
+    throw new Error("entry must be a single line");
+  }
+  return chars.length;
+}
+
+// The control-character scan lives on its own so the length, whitespace
+// and single-line checks above stay readable as the gate grows.
+function assertNoControlChars(chars) {
   for (const ch of chars) {
     const code = ch.codePointAt(0);
     if (code < 0x20 || code === 0x7f) {
       throw new Error("entry must not contain control characters");
     }
   }
-  if (text.includes("\n") || text.includes("\r")) {
-    throw new Error("entry must be a single line");
-  }
-  return true;
 }
 
 function main() {
